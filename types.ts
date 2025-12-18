@@ -1,0 +1,16 @@
+export interface ShortLink {
+  id: string;
+  slug: string;
+  originalUrl: string;
+  description?: string;
+  createdAt: number;
+  clicks: number;
+}
+
+export interface AppSettings {
+  baseUrl: string;
+}
+
+export interface SlugSuggestionResponse {
+  suggestions: string[];
+}
