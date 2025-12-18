@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { supabase } from './lib/supabase.js';
+import { supabase } from './_lib/supabase.js';
 import { LinkSchema, UpdateLinkSchema } from './schema.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
