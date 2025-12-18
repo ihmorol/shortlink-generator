@@ -71,7 +71,7 @@ async function shouldUseLocalStorage(): Promise<boolean> {
     useLocalStorage = !apiAvailable;
     
     if (useLocalStorage) {
-      console.info('📦 DEV MODE: Using localStorage fallback. Run `vercel dev` to use MongoDB.');
+      console.info('📦 DEV MODE: Using localStorage fallback. Run `npm start` (vercel dev) to use Supabase.');
     } else {
       console.info('🔌 DEV MODE: Connected to local API (vercel dev).');
     }
