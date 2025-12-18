@@ -1,14 +1,24 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { supabase } from './_lib/supabase.js';
+import { authenticate } from './_lib/auth.js';
 import { LinkSchema, UpdateLinkSchema } from './schema.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // CORS Preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  const userId = await authenticate(req, res);
+  if (!userId) return;
+
   try {
     switch (req.method) {
       case 'GET': {
         const { data: links, error } = await supabase
           .from('links')
           .select('*')
+          .eq('user_id', userId)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -32,7 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         const { slug, originalUrl, description } = validation.data;
 
-        // Check for duplicates
+        // Check for duplicates (globally unique slug, not just per user)
         const { data: existing } = await supabase
           .from('links')
           .select('slug')
@@ -47,7 +57,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           slug,
           original_url: originalUrl,
           description: description || '',
-          clicks: 0
+          clicks: 0,
+          user_id: userId
         };
 
         const { data: inserted, error } = await supabase
@@ -76,15 +87,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         const { id, slug, originalUrl, description, clicks } = validation.data;
         
+        // Ensure user owns the link
         const { data: existing } = await supabase
           .from('links')
-          .select('slug')
-          .eq('slug', slug)
-          .neq('id', id)
+          .select('slug, user_id')
+          .eq('id', id)
           .maybeSingle();
+        
+        if (!existing) {
+             return res.status(404).json({ error: 'Link not found' });
+        }
 
-        if (existing) {
-          return res.status(409).json({ error: 'Slug already exists' });
+        if (existing.user_id !== userId) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        // Check slug uniqueness if changed
+        if (existing.slug !== slug) {
+             const { data: duplicate } = await supabase
+                .from('links')
+                .select('slug')
+                .eq('slug', slug)
+                .maybeSingle();
+            
+             if (duplicate) {
+               return res.status(409).json({ error: 'Slug already exists' });
+             }
         }
 
         const { error } = await supabase
@@ -95,7 +123,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             description,
             clicks
           })
-          .eq('id', id);
+          .eq('id', id)
+          .eq('user_id', userId); // Extra safety
 
         if (error) throw error;
 
@@ -111,7 +140,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const { error } = await supabase
           .from('links')
           .delete()
-          .eq('id', id);
+          .eq('id', id)
+          .eq('user_id', userId); // Security: Only delete own links
 
         if (error) throw error;
         

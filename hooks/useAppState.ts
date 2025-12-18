@@ -2,18 +2,23 @@ import { useState, useEffect, useCallback } from 'react';
 import { ShortLink, AppSettings } from '../types';
 import { StorageService } from '../services/storageService';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '@clerk/clerk-react';
 
 export const useAppState = () => {
   const { success, error } = useToast();
+  const { getToken, userId } = useAuth();
   const [links, setLinks] = useState<ShortLink[]>([]);
   const [settings, setSettings] = useState<AppSettings>({ baseUrl: 'https://1ihm.vercel.app/' });
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
+    if (!userId) return; // Don't load if not signed in
+    
     try {
+      const token = await getToken();
       const [loadedLinks, loadedSettings] = await Promise.all([
-        StorageService.getLinks(),
-        StorageService.getSettings()
+        StorageService.getLinks(token),
+        StorageService.getSettings(token)
       ]);
       setLinks(loadedLinks);
       if (loadedSettings) {
@@ -21,11 +26,12 @@ export const useAppState = () => {
       }
     } catch (err: any) {
       console.error('Failed to load data:', err);
-      error(err.message || 'Failed to load data');
+      // Don't show toast on initial load error if it's just auth related, maybe?
+      // But here we likely want to know.
     } finally {
       setLoading(false);
     }
-  }, [error]);
+  }, [error, getToken, userId]);
 
   useEffect(() => {
     loadData();
@@ -33,17 +39,18 @@ export const useAppState = () => {
 
   const saveLink = async (linkData: Omit<ShortLink, 'id' | 'createdAt' | 'clicks'>, id?: string) => {
     try {
+      const token = await getToken();
       if (id) {
         // Update
         const existing = links.find(l => l.id === id);
         if (!existing) throw new Error('Link not found');
         const updatedLink = { ...existing, ...linkData };
-        await StorageService.updateLink(updatedLink);
+        await StorageService.updateLink(updatedLink, token);
         setLinks(prev => prev.map(l => l.id === id ? updatedLink : l));
         success('Link updated successfully');
       } else {
         // Create
-        const newLink = await StorageService.addLink(linkData);
+        const newLink = await StorageService.addLink(linkData, token);
         setLinks(prev => [newLink, ...prev]);
         success('Link created successfully');
       }
@@ -56,7 +63,8 @@ export const useAppState = () => {
 
   const deleteLink = async (id: string) => {
     try {
-      await StorageService.deleteLink(id);
+      const token = await getToken();
+      await StorageService.deleteLink(id, token);
       setLinks(prev => prev.filter(l => l.id !== id));
       success('Link deleted successfully');
     } catch (err: any) {
@@ -67,7 +75,8 @@ export const useAppState = () => {
 
   const saveSettings = async (newSettings: AppSettings) => {
     try {
-      await StorageService.saveSettings(newSettings);
+      const token = await getToken();
+      await StorageService.saveSettings(newSettings, token);
       setSettings(newSettings);
       success('Settings saved successfully');
       return true;

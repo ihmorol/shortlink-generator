@@ -1,5 +1,6 @@
 import React from 'react';
 import { Settings, Link as LinkIcon, Search, Plus } from 'lucide-react';
+import { UserButton } from "@clerk/clerk-react";
 
 interface HeaderProps {
   searchQuery: string;
@@ -22,7 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
             <LinkIcon className="w-5 h-5 text-white" />
           </div>
           <h1 className="text-xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent hidden sm:block">
-            Shortlink[ihm]
+            1ihm - shortlink
           </h1>
         </div>
 
@@ -53,6 +54,8 @@ export const Header: React.FC<HeaderProps> = ({
             <Plus className="w-4 h-4" />
             Create Link
           </button>
+
+          <UserButton />
         </div>
       </div>
       

@@ -85,13 +85,16 @@ async function shouldUseLocalStorage(): Promise<boolean> {
 }
 
 export const StorageService = {
-  getLinks: async (): Promise<ShortLink[]> => {
+  getLinks: async (token?: string | null): Promise<ShortLink[]> => {
     if (await shouldUseLocalStorage()) {
       return localStorageFallback.getLinks();
     }
     
     try {
-      const response = await fetch(`${API_BASE}/links`);
+      const headers: HeadersInit = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch(`${API_BASE}/links`, { headers });
       if (!response.ok) throw new Error('Failed to fetch links');
       return await response.json();
     } catch (e) {
@@ -100,7 +103,7 @@ export const StorageService = {
     }
   },
 
-  addLink: async (link: Omit<ShortLink, 'id' | 'createdAt' | 'clicks'>): Promise<ShortLink> => {
+  addLink: async (link: Omit<ShortLink, 'id' | 'createdAt' | 'clicks'>, token?: string | null): Promise<ShortLink> => {
     if (await shouldUseLocalStorage()) {
       const newLink: ShortLink = {
         id: crypto.randomUUID(),
@@ -113,9 +116,12 @@ export const StorageService = {
       return newLink;
     }
     
+    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
     const response = await fetch(`${API_BASE}/links`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(link)
     });
     if (!response.ok) {
@@ -125,7 +131,7 @@ export const StorageService = {
     return await response.json();
   },
 
-  updateLink: async (updatedLink: ShortLink): Promise<void> => {
+  updateLink: async (updatedLink: ShortLink, token?: string | null): Promise<void> => {
     if (await shouldUseLocalStorage()) {
       const links = localStorageFallback.getLinks();
       const newLinks = links.map(link => link.id === updatedLink.id ? updatedLink : link);
@@ -133,9 +139,12 @@ export const StorageService = {
       return;
     }
     
+    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
     const response = await fetch(`${API_BASE}/links`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(updatedLink)
     });
     if (!response.ok) {
@@ -144,26 +153,33 @@ export const StorageService = {
     }
   },
 
-  deleteLink: async (id: string): Promise<void> => {
+  deleteLink: async (id: string, token?: string | null): Promise<void> => {
     if (await shouldUseLocalStorage()) {
       const links = localStorageFallback.getLinks();
       localStorageFallback.saveLinks(links.filter(link => link.id !== id));
       return;
     }
     
+    const headers: HeadersInit = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
     const response = await fetch(`${API_BASE}/links?id=${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers
     });
     if (!response.ok) throw new Error('Failed to delete link');
   },
 
-  getSettings: async (): Promise<AppSettings | null> => {
+  getSettings: async (token?: string | null): Promise<AppSettings | null> => {
     if (await shouldUseLocalStorage()) {
       return localStorageFallback.getSettings();
     }
     
     try {
-      const response = await fetch(`${API_BASE}/settings`);
+      const headers: HeadersInit = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch(`${API_BASE}/settings`, { headers });
       if (!response.ok) throw new Error('Failed to fetch settings');
       return await response.json();
     } catch (e) {
@@ -172,15 +188,18 @@ export const StorageService = {
     }
   },
 
-  saveSettings: async (settings: AppSettings): Promise<void> => {
+  saveSettings: async (settings: AppSettings, token?: string | null): Promise<void> => {
     if (await shouldUseLocalStorage()) {
       localStorageFallback.saveSettings(settings);
       return;
     }
     
+    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
     const response = await fetch(`${API_BASE}/settings`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(settings)
     });
     if (!response.ok) throw new Error('Failed to save settings');

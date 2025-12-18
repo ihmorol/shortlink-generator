@@ -10,11 +10,21 @@ if (!rootElement) {
 
 import { ToastProvider } from './context/ToastContext';
 
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+
+if (!PUBLISHABLE_KEY) {
+  throw new Error("Missing Publishable Key")
+}
+
+import { ClerkProvider } from '@clerk/clerk-react'
+
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <ToastProvider>
-      <App />
-    </ToastProvider>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
+      <ToastProvider>
+        <App />
+      </ToastProvider>
+    </ClerkProvider>
   </React.StrictMode>
 );
