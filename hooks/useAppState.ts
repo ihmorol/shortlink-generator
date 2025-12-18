@@ -6,7 +6,7 @@ import { useToast } from '../context/ToastContext';
 export const useAppState = () => {
   const { success, error } = useToast();
   const [links, setLinks] = useState<ShortLink[]>([]);
-  const [settings, setSettings] = useState<AppSettings>({ baseUrl: 'https://ihmorol.vercel.app/' });
+  const [settings, setSettings] = useState<AppSettings>({ baseUrl: 'https://1ihm.vercel.app/' });
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
