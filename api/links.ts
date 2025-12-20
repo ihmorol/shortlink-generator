@@ -4,22 +4,34 @@ import { authenticate } from './_lib/auth.js';
 import { LinkSchema, UpdateLinkSchema } from './schema.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS Preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  const userId = await authenticate(req, res);
-  if (!userId) return;
+  const userId = await authenticate(req, res, true);
 
   try {
     switch (req.method) {
       case 'GET': {
-        const { data: links, error } = await supabase
+        const { trash, type } = req.query;
+        const isTrash = trash === 'true';
+
+        let query = supabase
           .from('links')
           .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false });
+          .eq('is_deleted', isTrash);
+
+        if (type === 'personalized') {
+          if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized - Login required for personalized links' });
+          }
+          query = query.eq('user_id', userId).eq('is_personalized', true);
+        } else {
+          // Public links (default)
+          query = query.eq('is_personalized', false);
+        }
+
+        const { data: links, error } = await query.order('created_at', { ascending: false });
 
         if (error) throw error;
 
@@ -29,7 +41,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           originalUrl: link.original_url,
           description: link.description,
           createdAt: link.created_at,
-          clicks: link.clicks
+          clicks: link.clicks,
+          userId: link.user_id,
+          isPersonalized: link.is_personalized,
+          isDeleted: link.is_deleted
         }));
         return res.status(200).json(formattedLinks);
       }
@@ -40,9 +55,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
            return res.status(400).json({ error: validation.error.issues[0].message });
         }
         
-        const { slug, originalUrl, description } = validation.data;
+        const { slug, originalUrl, description, is_personalized } = validation.data;
 
-        // Check for duplicates (globally unique slug, not just per user)
+        if (is_personalized && !userId) {
+            return res.status(401).json({ error: 'You must be logged in to create personalized links' });
+        }
+
+        // Check for duplicates
         const { data: existing } = await supabase
           .from('links')
           .select('slug')
@@ -58,7 +77,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           original_url: originalUrl,
           description: description || '',
           clicks: 0,
-          user_id: userId
+          user_id: is_personalized ? userId : null,
+          is_personalized: !!is_personalized,
+          is_deleted: false
         };
 
         const { data: inserted, error } = await supabase
@@ -75,7 +96,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           originalUrl: inserted.original_url,
           description: inserted.description,
           createdAt: inserted.created_at,
-          clicks: inserted.clicks
+          clicks: inserted.clicks,
+          isPersonalized: inserted.is_personalized,
+          isDeleted: inserted.is_deleted
         });
       }
 
@@ -85,12 +108,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
            return res.status(400).json({ error: validation.error.issues[0].message });
         }
         
-        const { id, slug, originalUrl, description, clicks } = validation.data;
+        const { id, slug, originalUrl, description, clicks, is_deleted } = validation.data;
         
-        // Ensure user owns the link
+        // Fetch existing to check permissions
         const { data: existing } = await supabase
           .from('links')
-          .select('slug, user_id')
+          .select('slug, user_id, is_personalized')
           .eq('id', id)
           .maybeSingle();
         
@@ -98,8 +121,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
              return res.status(404).json({ error: 'Link not found' });
         }
 
-        if (existing.user_id !== userId) {
-            return res.status(403).json({ error: 'Forbidden' });
+        // Permission check
+        if (existing.is_personalized && existing.user_id !== userId) {
+            return res.status(403).json({ error: 'Forbidden - You do not own this link' });
         }
 
         // Check slug uniqueness if changed
@@ -115,16 +139,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
              }
         }
 
-        const { error } = await supabase
-          .from('links')
-          .update({
+        const updates: any = {
             slug,
             original_url: originalUrl,
             description,
             clicks
-          })
-          .eq('id', id)
-          .eq('user_id', userId); // Extra safety
+        };
+
+        // Handle Restore
+        if (typeof is_deleted === 'boolean') {
+            updates.is_deleted = is_deleted;
+        }
+
+        const { error } = await supabase
+          .from('links')
+          .update(updates)
+          .eq('id', id);
 
         if (error) throw error;
 
@@ -137,11 +167,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(400).json({ error: 'ID required' });
         }
         
+        // Fetch to check type/permissions
+        const { data: existing } = await supabase
+           .from('links')
+           .select('user_id, is_personalized')
+           .eq('id', id)
+           .maybeSingle();
+
+        if (!existing) {
+             return res.status(404).json({ error: 'Link not found' });
+        }
+
+        // Authorized if: Public OR (Personalized AND Owned)
+        const isAuthorized = !existing.is_personalized || (existing.is_personalized && existing.user_id === userId);
+        
+        if (!isAuthorized) {
+             return res.status(403).json({ error: 'Forbidden - You cannot delete this link' });
+        }
+
+        // Soft Delete
         const { error } = await supabase
           .from('links')
-          .delete()
-          .eq('id', id)
-          .eq('user_id', userId); // Security: Only delete own links
+          .update({ is_deleted: true })
+          .eq('id', id);
 
         if (error) throw error;
         

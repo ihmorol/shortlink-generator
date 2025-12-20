@@ -1,18 +1,16 @@
 import React from 'react';
-import { Settings, Link as LinkIcon, Search, Plus } from 'lucide-react';
+import { Link as LinkIcon, Search, Plus } from 'lucide-react';
 import { UserButton } from "@clerk/clerk-react";
 
 interface HeaderProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  onOpenSettings: () => void;
   onOpenCreate: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
   searchQuery, 
   setSearchQuery, 
-  onOpenSettings, 
   onOpenCreate 
 }) => {
   return (
@@ -38,14 +36,6 @@ export const Header: React.FC<HeaderProps> = ({
               className="bg-slate-900 border border-slate-800 rounded-full pl-10 pr-4 py-1.5 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all w-64 text-slate-200"
             />
           </div>
-
-          <button 
-            onClick={onOpenSettings}
-            className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
-            title="Settings"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
           
           <button
             onClick={onOpenCreate}

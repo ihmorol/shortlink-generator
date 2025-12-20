@@ -4,9 +4,9 @@
   "outputDirectory": "dist",
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/assets/(.*)", "destination": "/assets/$1" },
-    { "source": "/([^/]+)", "destination": "/api/redirect?slug=$1" }
+    { "source": "/api/:path*", "destination": "/api/:path*" },
+    { "source": "/assets/:path*", "destination": "/assets/:path*" },
+    { "source": "/:slug([a-zA-Z0-9_-]+)", "destination": "/api/redirect?slug=:slug" }
   ],
   "headers": [
     {

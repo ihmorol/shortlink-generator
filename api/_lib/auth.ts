@@ -4,9 +4,10 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const clerkClient = Clerk({ secretKey: process.env.CLERK_SECRET_KEY });
 
-export async function authenticate(req: VercelRequest, res: VercelResponse): Promise<string | null> {
+export async function authenticate(req: VercelRequest, res: VercelResponse, optional = false): Promise<string | null> {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (optional) return null;
     res.status(401).json({ error: 'Missing or invalid authorization header' });
     return null;
   }

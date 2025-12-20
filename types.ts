@@ -5,6 +5,9 @@ export interface ShortLink {
   description?: string;
   createdAt: number;
   clicks: number;
+  userId?: string;
+  isPersonalized?: boolean;
+  isDeleted?: boolean;
 }
 
 export interface AppSettings {

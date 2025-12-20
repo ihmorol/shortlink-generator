@@ -17,11 +17,23 @@ if (!PUBLISHABLE_KEY) {
 }
 
 import { ClerkProvider } from '@clerk/clerk-react'
+import { dark } from '@clerk/themes'
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
+    <ClerkProvider 
+      publishableKey={PUBLISHABLE_KEY} 
+      afterSignOutUrl="/"
+      appearance={{
+        baseTheme: dark,
+        variables: {
+          colorPrimary: '#4f46e5', // Matches primary-600
+          colorBackground: '#0f172a', // Matches slate-900
+          colorText: '#e2e8f0', // Matches slate-200
+        }
+      }}
+    >
       <ToastProvider>
         <App />
       </ToastProvider>
