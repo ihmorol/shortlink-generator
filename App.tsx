@@ -130,15 +130,17 @@ export default function App() {
           </div>
 
           {activeTab === 'personalized' && !isSignedIn ? (
-              <div className="flex sm:flex-col md:flex-row items-center justify-center py-20 bg-slate-900/30 rounded-xl border border-dashed border-slate-800">
+              <div className="flex items-center justify-center py-8 md:py-20 bg-slate-900/30 rounded-xl border border-dashed border-slate-800">
                  
-                 <div className="bg-slate-800 p-1 rounded-xl flex sm:flex-col md:flex-row items-center justify-center gap-3 pr-2.5">
-                  <div className="flex flex-col items-center justify-center p-20 bg-slate-900 rounded-xl py-40">
-                    <Lock className="w-12 h-12 text-red-600 mb-4" />
-                    <h3 className="text-xl font-medium text-slate-300 mb-2">Login Required</h3>
-                    <p className="text-slate-500 max-w-md text-center mb-6">You need to sign in to access and create your personalized links.</p>
+                 <div className="bg-slate-800 p-1 rounded-xl flex flex-col lg:flex-row items-center justify-center gap-3 lg:pr-2.5 max-w-full mx-2">
+                  <div className="flex flex-col items-center justify-center p-8 md:p-12 lg:p-20 bg-slate-900 rounded-xl lg:py-40">
+                    <Lock className="w-8 h-8 md:w-12 md:h-12 text-red-600 mb-4" />
+                    <h3 className="text-lg md:text-xl font-medium text-slate-300 mb-2 text-center">Login Required</h3>
+                    <p className="text-slate-500 max-w-md text-center text-sm md:text-base mb-4 lg:mb-6 px-4">You need to sign in to access and create your personalized links.</p>
                   </div>
-                  <SignIn />
+                  <div className="pb-4 lg:pb-0">
+                    <SignIn />
+                  </div>
                  </div>
               </div>
           ) : (
