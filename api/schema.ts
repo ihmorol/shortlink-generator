@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Known shortlink domains to prevent self-referencing (R15 FIX)
-const SHORTLINK_DOMAINS = ['1ihm.vercel.app', 'localhost:5173', 'localhost:3000'];
+const SHORTLINK_DOMAINS = ['s.ihmorol.cv'];
 
 // Helper to check if URL might cause redirect loop
 const isSelfReferencing = (url: string): boolean => {

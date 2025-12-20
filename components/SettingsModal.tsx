@@ -42,7 +42,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
             <input
               type="text"
               required
-              placeholder="https://1ihm.vercel.app/"
+              placeholder="https://s.ihmorol.cv/"
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
               className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all placeholder:text-slate-700"

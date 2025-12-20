@@ -21,7 +21,7 @@ export const Header: React.FC<HeaderProps> = ({
             <LinkIcon className="w-5 h-5 text-white" />
           </div>
           <h1 className="text-xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent hidden sm:block">
-            1ihm - shortlink
+            BriefLi
           </h1>
         </div>
 

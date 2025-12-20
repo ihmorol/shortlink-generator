@@ -5,7 +5,7 @@ import { useToast } from '../context/ToastContext';
 import { useAuth } from '@clerk/clerk-react';
 
 // Hardcoded base URL (no settings table needed)
-const BASE_URL = 'https://1ihm.vercel.app/';
+const BASE_URL = 'https://s.ihmorol.cv/';
 
 export const useAppState = () => {
   const { success, error } = useToast();
